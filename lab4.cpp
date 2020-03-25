@@ -92,25 +92,23 @@ void gaus(double **array, double *farr)
 	{
 		farr1[i] = farr[i];
 	}
-
+	double buf;
 	for (int k = 0; k < N - 1; k++)
 	{
-		for (int i = k; i < N; i++)
-		{
+		for (int i = k+1; i < N; i++)
+		{ 
+			buf = array1[i][k] / array1[k][k];
 			for (int j = k; j < N; j++)
 			{
-				if ((i != k) && (j != k))
-					array1[i][j] = array1[i][j] - array1[i][k] * array1[k][j] / array1[k][k];
-
+				array1[i][j] -= buf * array1[k][j];
 			}
-			if (i != k)
-			{
-				farr1[i] = farr1[i] - array1[i][k] * farr1[k] / array1[k][k];
-				array1[i][k] = 0;
-			}
+			farr1[i] -= buf * farr1[k];
+			//array1[i][k] = 0;
+			//array1[i][k] = array1[i][k] - array1[i][k] * array1[k][k] / array1[k][k];
 		}
 
 	}
+	
 
 	cout << endl << "triangular system: " << endl;
 	for (int i = 0; i < N; i++)
@@ -134,7 +132,8 @@ void gaus(double **array, double *farr)
 	cout << endl  << "Solution: " << endl;
 	for (int i = N - 1; i >= 0; i--)
 	{
-		for (int j = N - 1; j > i; j--)
+		buff = 0;
+		for (int j = i+1; j < N; j++)
 		{
 			buff += array1[i][j] * solution[j];
 		}
@@ -175,7 +174,70 @@ void gaus(double **array, double *farr)
 	}
 	cout << endl << "Norma nevzki: " << norm << endl;
 }
-
+void gauss(double **a, double *y, int n)
+{
+	double *x, max;
+	int k, index;
+	const double eps = 0.00001;  // точность
+	x = new double[n];
+	k = 0;
+	while (k < n)
+	{
+		// Поиск строки с максимальным a[i][k]
+		max = abs(a[k][k]);
+		index = k;
+		for (int i = k + 1; i < n; i++)
+		{
+			if (abs(a[i][k]) > max)
+			{
+				max = abs(a[i][k]);
+				index = i;
+			}
+		}
+		// Перестановка строк
+		if (max < eps)
+		{
+			// нет ненулевых диагональных элементов
+			cout << "Решение получить невозможно из-за нулевого столбца ";
+			cout << index << " матрицы A" << endl;
+			return;
+		}
+		for (int j = 0; j < n; j++)
+		{
+			double temp = a[k][j];
+			a[k][j] = a[index][j];
+			a[index][j] = temp;
+		}
+		double temp = y[k];
+		y[k] = y[index];
+		y[index] = temp;
+		// Нормализация уравнений
+		for (int i = k; i < n; i++)
+		{
+			double temp = a[i][k];
+			if (abs(temp) < eps) continue; // для нулевого коэффициента пропустить
+			for (int j = 0; j < n; j++)
+				a[i][j] = a[i][j] / temp;
+			y[i] = y[i] / temp;
+			if (i == k)  continue; // уравнение не вычитать само из себя
+			for (int j = 0; j < n; j++)
+				a[i][j] = a[i][j] - a[k][j];
+			y[i] = y[i] - y[k];
+		}
+		k++;
+	}
+	// обратная подстановка
+	for (k = n - 1; k >= 0; k--)
+	{
+		x[k] = y[k];
+		for (int i = 0; i < k; i++)
+			y[i] = y[i] - a[i][k] * x[k];
+	}
+	for (int i = 0; i < N; i++)
+	{
+		cout << x[i] << endl;
+	}
+}
 void pvr(double **array, double *farr)
 {
 	int n, i, j, k = 0;
@@ -362,7 +424,7 @@ int main(int argc, char *argv[])
 	//метод гаусса
 	cout << endl << "method Gaussa: " << endl;
 	gaus(array, farr);
-
+	//gauss(array, farr, N);
 
 	//метод пвр
 	cout << endl << "method pvr: " << endl << endl;
